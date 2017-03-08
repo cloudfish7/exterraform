@@ -1,0 +1,93 @@
+#! /bin/sh
+#
+# Extention terraform
+#
+
+# ----------------------------------------
+# usage
+# ----------------------------------------
+usage(){
+   echo $"Usage: exterraform {plan|apply|destroy}"
+   RETVAL=2
+}
+
+# ----------------------------------------
+# readConfig
+# ----------------------------------------
+readConfig() {
+
+    inputf=$1
+    while read line
+    do
+        if echo $line | grep -e '^#' -e '^$' >/dev/null; then
+            continue
+        fi
+    
+        echo $line
+    
+    done < ${inputf}
+}
+
+# ----------------------------------------
+# plan
+# ----------------------------------------
+plan(){
+
+    conf_file=$1
+
+    if [ -z "${conf_file}" ]; then
+       echo "Usage: exterraform plan conf"
+       return
+    fi
+
+    if [ ! -e ${conf_file} ]; then
+       echo "Usage: exterraform plan conf"
+       return
+    fi
+
+    cat /dev/null > tftemp.tf
+
+    #for line in `cat ${conf_file}`
+    for line in `readConfig $1`
+    do
+        find ${line} -name "*.tf" |xargs -I% cat % >> tftemp.tf
+        find ${line}/*  -type d |xargs -I% cp -r % .
+    done
+    
+    terraform plan
+
+}
+
+# ----------------------------------------
+# apply
+# ----------------------------------------
+apply(){
+
+    terraform apply
+}
+
+
+# ----------------------------------------
+# destroy
+# ----------------------------------------
+destroy(){
+
+   terraform destroy
+}
+
+case "$1" in
+  plan)
+        plan $2
+        ;;
+  apply)
+        apply
+        ;;
+  destroy)
+        destroy
+        ;;
+  *)
+        usage
+esac
+
+
+
